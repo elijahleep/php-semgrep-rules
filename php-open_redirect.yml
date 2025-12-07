@@ -1,0 +1,36 @@
+rules:
+  - id: php-open-redirect-header
+    languages: [php]
+    severity: ERROR
+    mode: taint
+    message: |
+      Possible open redirect: user-controlled data flows into a Location HTTP header.
+      Validate and restrict redirect targets (e.g. allow only relative URLs or a
+      fixed set of domains) before using them in redirects.
+
+    metadata:
+      category: security
+      technology: [php]
+      cwe:
+        - "CWE-601: URL Redirection to Untrusted Site ('Open Redirect')"
+      owasp:
+        - A01:2017 - Injection
+        - A01:2021 - Broken Access Control
+      confidence: MEDIUM
+      likelihood: MEDIUM
+      impact: MEDIUM
+
+
+    pattern-sources:
+      - patterns:
+          - pattern-either:
+              - pattern: $_GET
+              - pattern: $_POST
+              - pattern: $_REQUEST
+
+    pattern-sinks:
+      - patterns:
+          - pattern: header($HDR)
+          - metavariable-regex:
+              metavariable: $HDR
+              regex: (?i).*location\s*:

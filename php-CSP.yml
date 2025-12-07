@@ -1,0 +1,84 @@
+rules:
+  - id: php-csp-low-external-script-whitelist
+    languages: [php]
+    severity: ERROR
+    message: |
+      CSP allows scripts from external domains, and user-controlled input is
+      used as a <script src="..."> URL. This matches the DVWA CSP low level
+      and may allow loading attacker-controlled JavaScript.
+
+    metadata:
+      category: security
+      technology: [php]
+      dvwa-level: csp-low
+      cwe:
+        - "CWE-116: Improper Output Neutralization for Web Page Generation ('XSS')"
+      owasp:
+        - A05:2021 - Security Misconfiguration
+      confidence: MEDIUM
+      likelihood: HIGH
+      impact: HIGH
+
+    mode: taint
+
+    # источник – любые данные из POST (в DVWA: $_POST['include'])
+    pattern-sources:
+      - pattern: $_POST
+
+    # sink – <script src='...'> с user-controlled переменной
+    pattern-sinks:
+      - pattern: |
+          $page['body'] .= "<script src='" . $URL . "'></script>";
+
+    # правило должно срабатывать только там, где есть CSP с whitelist внешних доменов
+    pattern-inside: |
+      $headerCSP = $CONF;
+      header($headerCSP);
+
+    metavariable-regex:
+      metavariable: $CONF
+      regex: (?i)Content-Security-Policy:.*script-src.*(pastebin\.com|hastebin\.com|toptal\.com|example\.com|code\.jquery\.com|digi\.ninja)
+
+
+
+  - id: php-csp-medium-unsafe-inline-with-user-html
+    languages: [php]
+    severity: ERROR
+    message: |
+      CSP uses 'unsafe-inline' and a fixed nonce, while user-controlled HTML
+      is injected directly into the page. This effectively disables CSP XSS
+      protection. Matches DVWA CSP medium level.
+
+    metadata:
+      category: security
+      technology: [php]
+      dvwa-level: csp-medium
+      cwe:
+        - "CWE-116: Improper Output Neutralization for Web Page Generation ('XSS')"
+      owasp:
+        - A05:2021 - Security Misconfiguration
+      confidence: MEDIUM
+      likelihood: HIGH
+      impact: HIGH
+
+    mode: taint
+
+    # источник – POST (include)
+    pattern-sources:
+      - pattern: $_POST
+
+    # sink – прямое включение содержимого в шаблон
+    pattern-sinks:
+      - pattern: |
+          $page['body'] .= "
+            " . $INCLUDE . "
+          ";
+
+    # внутри файла должен быть CSP с 'unsafe-inline'
+    pattern-inside: |
+      $headerCSP = $CSP;
+      header($headerCSP);
+
+    metavariable-regex:
+      metavariable: $CSP
+      regex: (?i)Content-Security-Policy:.*script-src.*'unsafe-inline'

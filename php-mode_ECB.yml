@@ -1,0 +1,24 @@
+rules:
+  - id: php-insecure-aes-ecb
+    languages: [php]
+    severity: ERROR
+    message: >
+      Используется AES-*-ECB. ECB небезопасен: блоки можно переставлять и анализировать.
+      Используйте AES-GCM, ChaCha20-Poly1305 или хотя бы AES-CBC + HMAC.
+    patterns:
+      - pattern-either:
+          # encrypt с присваиванием
+          - pattern: |
+              $X = openssl_encrypt($DATA, $ALGO, $KEY, $OPTS, ...);
+          # decrypt с присваиванием
+          - pattern: |
+              $X = openssl_decrypt($DATA, $ALGO, $KEY, $OPTS, ...);
+          # encrypt без присваивания
+          - pattern: |
+              openssl_encrypt($DATA, $ALGO, $KEY, $OPTS, ...);
+          # decrypt без присваивания
+          - pattern: |
+              openssl_decrypt($DATA, $ALGO, $KEY, $OPTS, ...);
+      - metavariable-regex:
+          metavariable: $ALGO
+          regex: '(?i)aes-(128|192|256)-ecb'

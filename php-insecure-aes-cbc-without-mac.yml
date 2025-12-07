@@ -1,0 +1,39 @@
+rules:
+  - id: php-insecure-aes-cbc-without-mac
+    severity: WARNING
+    languages: [php]
+    message: >
+      Используется AES-CBC без явного MAC/AEAD рядом с этим вызовом.
+  CBC не обеспечивает целостность сам по себе и часто подвержен
+  padding oracle и подделке расшифрованных данных, если шифротекст
+  может менять атакующий. Убедитесь, что целостность данных
+  защищена (например, HMAC или AEAD), либо что шифротекст не
+  доступен для модификации.
+    patterns:
+      # Ищем вызовы AES-CBC
+      - pattern-either:
+          - pattern: |
+              $X = openssl_encrypt($DATA, $ALGO, $KEY, $OPTS, $IV);
+          - pattern: |
+              $X = openssl_decrypt($DATA, $ALGO, $KEY, $OPTS, $IV);
+      - metavariable-regex:
+          metavariable: $ALGO
+          regex: "aes-(128|192|256)-cbc"
+
+      # Исключаем AEAD (openssl_encrypt с тегом)
+      - pattern-not: |
+          $X = openssl_encrypt($DATA, $ALGO, $KEY, $OPTS, $IV, $TAG);
+
+      # Исключаем HMAC-подпись (простые случаи)
+      - pattern-not: |
+          $MAC = hash_hmac(...);
+
+      - pattern-not: |
+          if (hash_equals($MAC, ...)) { ... }
+
+      # Исключаем sodium AEAD
+      - pattern-not: |
+          $C = sodium_crypto_aead_chacha20poly1305_encrypt(...);
+
+      - pattern-not: |
+          $P = sodium_crypto_aead_chacha20poly1305_decrypt(...);

@@ -1,0 +1,48 @@
+rules:
+  - id: php-ldap-injection
+    severity: ERROR
+    message: >
+      User-controlled input flows into LDAP search parameters (base DN or filter),
+      which can lead to LDAP Injection. Use ldap_escape() to sanitize input.
+    metadata:
+      category: security
+      technology: [php]
+      subcategory: [vuln]
+      cwe:
+        - "CWE-90: Improper Neutralization of Special Elements used in an LDAP Query (LDAP Injection)"
+      owasp:
+        - "A03:2021 – Injection"
+      likelihood: HIGH
+      impact: HIGH
+      confidence: MEDIUM
+
+    languages: [php]
+    mode: taint
+
+    #######################################################
+    # SOURCES: пользовательский ввод
+    #######################################################
+    pattern-sources:
+      - pattern: $_GET[$KEY]
+      - pattern: $_POST[$KEY]
+      - pattern: $_REQUEST[$KEY]
+      - pattern: $_COOKIE[$KEY]
+      - pattern: $REQ->query->get($P)
+      - pattern: $REQ->request->get($P)
+      - pattern: $REQ->get($P)
+
+    #######################################################
+    # SANITIZERS: ldap_escape()
+    #######################################################
+    pattern-sanitizers:
+      - pattern: ldap_escape($VALUE, ...)
+
+    #######################################################
+    # SINKS: LDAP функции
+    #######################################################
+    pattern-sinks:
+      - pattern-either:
+          # ldap_search(resource, base_dn, filter, ...)
+          - pattern: ldap_search($DS, $BASE, $FILTER, ...)
+          - pattern: ldap_list($DS, $BASE, $FILTER, ...)
+          - pattern: ldap_read($DS, $BASE, $FILTER, ...)

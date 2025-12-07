@@ -1,0 +1,17 @@
+rules:
+  - id: php-preg-replace-all-from-get
+    message: >
+      Все аргументы preg_replace берутся из $_GET.
+      Это может привести к ReDoS, RCE (при /e) или неожиданному поведению regex.
+    severity: ERROR
+    languages: [php]
+    patterns:
+      - pattern: preg_replace($_GET[$P], $_GET[$R], $_GET[$S]);
+
+  - id: php-preg-replace-pattern-from-get
+    message: >
+      Шаблон регулярного выражения preg_replace() контролируется пользователем ($_GET).
+    severity: WARNING
+    languages: [php]
+    patterns:
+      - pattern: preg_replace($_GET[$P], $R, $S);

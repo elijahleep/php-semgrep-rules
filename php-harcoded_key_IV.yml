@@ -1,0 +1,80 @@
+rules:
+  # 1) Захардкоженный ключ в define()
+  - id: php-hardcoded-crypto-key-constant
+    languages: [php]
+    severity: WARNING
+    message: >
+      Найдена константа с потенциальным криптографическим ключом.
+      Ключи нельзя хранить в исходниках. Используйте ENV, Vault или KMS.
+    patterns:
+      - pattern: |
+          define($NAME, $VALUE);
+      - metavariable-regex:
+          metavariable: $NAME
+          regex: '(?i)(key|secret|token|password|passwd|api[_-]?key|hmac|auth|master)'
+      - metavariable-regex:
+          metavariable: $VALUE
+          regex: '^["\'][^"\']*["\']$'
+
+  # 2) Захардкоженный ключ в обычном присваивании
+  - id: php-hardcoded-crypto-key-assignment
+    languages: [php]
+    severity: WARNING
+    message: >
+      Найдена переменная с потенциальным криптографическим ключом.
+      Ключи нельзя хранить в исходниках. Используйте ENV, Vault или KMS.
+    patterns:
+      - pattern: |
+          $VAR = $VALUE;
+      - metavariable-regex:
+          metavariable: $VAR
+          regex: '(?i)(\$?(key|secret|token|password|passwd|api[_-]?key|hmac|auth|master))'
+      - metavariable-regex:
+          metavariable: $VALUE
+          regex: '^["\'][^"\']*["\']$'
+
+  # 3) Захардкоженный IV через define()
+  - id: php-hardcoded-crypto-iv-constant
+    languages: [php]
+    severity: WARNING
+    message: >
+      Найдена константа IV, что является криптографически небезопасным.
+      IV должен быть случайным и уникальным (random_bytes()).
+    patterns:
+      - pattern: |
+          define($NAME, $VALUE);
+      - metavariable-regex:
+          metavariable: $NAME
+          regex: '(?i)(iv|nonce|initial[_-]?vector)'
+      - metavariable-regex:
+          metavariable: $VALUE
+          regex: '^["\'][^"\']*["\']$'
+
+  # 4) Статический IV в AES-CBC
+  - id: openssl-cbc-static-iv
+    languages: [php]
+    severity: ERROR
+    message: >
+      Static IV used with AES-CBC. Это небезопасно и приводит к атакам
+      на конфиденциальность и целостность (CWE-329).
+    patterns:
+      - pattern-either:
+          - pattern: |
+              openssl_encrypt($D, $M, $K, $FLAGS, $IV, ...);
+          - pattern: |
+              openssl_decrypt($D, $M, $K, $FLAGS, $IV, ...);
+      - metavariable-regex:
+          metavariable: $M
+          regex: '(?i)aes-(128|192|256)-cbc'
+      - metavariable-regex:
+          metavariable: $IV
+          regex: '^["\'][^"\']*["\']$'
+    metadata:
+      cwe: ['CWE-329']
+      owasp: ['A02:2021 – Cryptographic Failures']
+      technology: ['php', 'openssl']
+      category: security
+      subcategory: ['vuln']
+      likelihood: HIGH
+      impact: MEDIUM
+      confidence: HIGH

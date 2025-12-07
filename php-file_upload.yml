@@ -1,0 +1,131 @@
+rules:
+  ######################################################################
+  # 1) LOW: вообще без проверок — просто move_uploaded_file()
+  ######################################################################
+  - id: php-unrestricted-file-upload-low
+    languages: [php]
+    severity: ERROR
+    message: |
+      Possible unrestricted file upload: user-controlled file name from $_FILES
+      is written to a web-accessible directory without validating extension,
+      content type, or using getimagesize(). This matches DVWA low level.
+
+    metadata:
+      category: security
+      technology: [php]
+      cwe:
+        - "CWE-434: Unrestricted Upload of File with Dangerous Type"
+      owasp:
+        - A05:2021 - Security Misconfiguration
+      dvwa-level: low
+      confidence: MEDIUM
+      likelihood: HIGH
+      impact: HIGH
+
+    # Ищем прямой upload: путь строится из basename($_FILES[…]['name'])
+    # и потом используется в move_uploaded_file без каких-либо проверок типа/размера/контента
+    pattern-either:
+      - patterns:
+          - pattern: |
+              $TARGET = $BASE . basename($_FILES[$F]['name']);
+          - pattern: |
+              move_uploaded_file($_FILES[$F]['tmp_name'], $TARGET)
+
+      - pattern: |
+          move_uploaded_file($_FILES[$F]['tmp_name'], $BASE . basename($_FILES[$F]['name']))
+
+    # Хочется исключить случаи, где рядом есть проверки типа/размера/контента.
+    # Это грубый фильтр: если в том же файле вообще упоминаются проверки,
+    # мы НЕ считаем это "low" (пусть поймают medium/high-правила).
+    pattern-not: |
+      $_FILES[$F]['type']
+
+  ######################################################################
+  # 2) MEDIUM: проверяется только MIME-тип и размер (на основе $_FILES['type'])
+  ######################################################################
+  - id: php-weak-file-upload
+    languages: [php]
+    severity: ERROR
+    message: |
+      Weak file upload validation: upload is allowed based only on the client-
+      controlled MIME type ($_FILES['type']) and size. This matches DVWA medium
+      level and can be bypassed by spoofing the Content-Type header.
+
+    metadata:
+      category: security
+      technology: [php]
+      cwe:
+        - "CWE-434: Unrestricted Upload of File with Dangerous Type"
+      owasp:
+        - A05:2021 - Security Misconfiguration
+      dvwa-level: medium
+      confidence: MEDIUM
+      likelihood: MEDIUM
+      impact: HIGH
+
+    # Типичный паттерн DVWA medium:
+    # if ( ($uploaded_type == "image/jpeg" || ... ) && ($uploaded_size < ...) ) {
+    #     move_uploaded_file($_FILES['uploaded']['tmp_name'], $target_path);
+    # }
+    patterns:
+      - pattern-inside: |
+          if ( ($TYPE_CHECK) && ($SIZE_CHECK) ) {
+            ...
+            move_uploaded_file($_FILES[$F]['tmp_name'], $TARGET);
+            ...
+          }
+      - pattern: |
+          $uploaded_type = $_FILES[$F]['type'];
+      - pattern: |
+          $uploaded_size = $_FILES[$F]['size'];
+
+    # MEDIUM не должен срабатывать там, где уже используют getimagesize()
+    pattern-not: |
+      getimagesize($TMP)
+
+  ######################################################################
+  # 3) HIGH: расширение + размер + getimagesize() — почти ок, но всё ещё риск
+  ######################################################################
+  - id: php-file-upload-image-only
+    languages: [php]
+    severity: WARNING
+    message: |
+      Image-only upload with extension and getimagesize() checks. This matches
+      DVWA high level. This is much better than no validation, but uploaded
+      images may still be abused (e.g. polyglot files, image parsing bugs),
+      especially if they are stored in a web-accessible directory.
+
+    metadata:
+      category: security
+      technology: [php]
+      cwe:
+        - "CWE-434: Unrestricted Upload of File with Dangerous Type"
+      owasp:
+        - A05:2021 - Security Misconfiguration
+      dvwa-level: high
+      confidence: HIGH
+      likelihood: LOW
+      impact: MEDIUM
+
+    # Паттерн DVWA high:
+    #   $uploaded_ext  = substr(...);
+    #   $uploaded_size = $_FILES['uploaded']['size'];
+    #   $uploaded_tmp  = $_FILES['uploaded']['tmp_name'];
+    #   if ( (ext in [jpg,jpeg,png]) && (size < ...) && getimagesize($uploaded_tmp) ) {
+    #       move_uploaded_file($uploaded_tmp, $target_path);
+    #   }
+    patterns:
+      - pattern: |
+          $uploaded_name = $_FILES[$F]['name'];
+      - pattern: |
+          $uploaded_ext  = substr($uploaded_name, strrpos($uploaded_name, '.') + 1);
+      - pattern: |
+          $uploaded_size = $_FILES[$F]['size'];
+      - pattern: |
+          $uploaded_tmp  = $_FILES[$F]['tmp_name'];
+      - pattern-inside: |
+          if ( ($EXT_CHECK) && ($SIZE_CHECK) && getimagesize($uploaded_tmp) ) {
+            ...
+            move_uploaded_file($uploaded_tmp, $TARGET);
+            ...
+          }

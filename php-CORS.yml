@@ -1,0 +1,19 @@
+rules:
+  - id: php-permissive-cors-withheader
+    message: >
+      Заголовок Access-Control-Allow-Origin установлен в "*".
+      Это включает доступ с любых доменов (permissive CORS).
+    severity: WARNING
+    languages: [php]
+    patterns:
+      - pattern: $RESP->withHeader($NAME, $VALUE)
+      - metavariable-regex:
+          metavariable: $NAME
+          regex: (\'|\")Access-Control-Allow-Origin(\'|\")
+      - metavariable-regex:
+          metavariable: $VALUE
+          regex: (\'|\")\*(\'|\")
+    metadata:
+      category: security
+      subcategory: [audit]
+      technology: [php]

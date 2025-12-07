@@ -1,0 +1,67 @@
+rules:
+  - id: php-lfi-tainted-path
+    severity: ERROR
+    message: >
+      User-controlled input flows into filesystem functions.
+      This may lead to Local File Inclusion (LFI), Directory Traversal, or
+      Arbitrary File Read/Write.
+    metadata:
+      technology: [php]
+      category: security
+      cwe:
+        - "CWE-22: Improper Limitation of a Pathname to a Restricted Directory (Path Traversal)"
+        - "CWE-73: External Control of File Name or Path"
+      owasp:
+        - "A01:2021 - Broken Access Control"
+      subcategory: [vuln]
+      impact: HIGH
+      likelihood: HIGH
+      confidence: MEDIUM
+    languages: [php]
+    mode: taint
+
+    # SOURCES (путь строится из пользовательского ввода)
+    pattern-sources:
+      - pattern: $_GET[$KEY]
+      - pattern: $_POST[$KEY]
+      - pattern: $_REQUEST[$KEY]
+      - pattern: $_COOKIE[$KEY]
+      - pattern: $_SERVER[$KEY]
+      # Symfony Request::get("file")
+      - pattern: $REQ->get($P)
+      - pattern: $REQ->query->get($P)
+      - pattern: $REQ->request->get($P)
+
+    # SANITIZERS (если применены — пропускаем)
+    pattern-sanitizers:
+      - pattern: realpath($PATH)
+      - pattern: basename($PATH, ...)
+      - pattern: realpath($PATH)
+      - pattern: filter_var($PATH, FILTER_SANITIZE_URL)
+      - pattern: filter_var($PATH, FILTER_SANITIZE_SPECIAL_CHARS)
+
+    # SINKS (опасные файловые операции с tainted path)
+    pattern-sinks:
+      - pattern-either:
+          - pattern: file_get_contents($PATH)
+          - pattern: file_put_contents($PATH, ...)
+          - pattern: fopen($PATH, ...)
+          - pattern: readfile($PATH)
+          - pattern: file($PATH)
+          - pattern: unlink($PATH)
+          - pattern: include($PATH)
+          - pattern: include_once($PATH)
+          - pattern: require($PATH)
+          - pattern: require_once($PATH)
+          - pattern: highlight_file($PATH)
+          - pattern: parse_ini_file($PATH)
+          - pattern: stat($PATH)
+          - pattern: is_file($PATH)
+          - pattern: is_readable($PATH)
+          - pattern: is_dir($PATH)
+          - pattern: mime_content_type($PATH)
+          - pattern: md5_file($PATH)
+          - pattern: sha1_file($PATH)
+          - pattern: imagecreatefrom*($PATH)
+          - pattern: yaml_parse_file($PATH)
+          - pattern: yaml_emit_file($PATH)
