@@ -40,6 +40,43 @@ rules:
     pattern-not: |
       $_FILES[$F]['type']
 
+
+
+  - id: php-unrestricted-file-upload-low-1
+    languages: [php]
+    severity: ERROR
+    message: |
+      Possible unrestricted file upload: user-controlled file name from $_FILES
+      is written to a web-accessible directory without validating extension,
+      content type, or using getimagesize(). This matches DVWA low level.
+
+    metadata:
+      category: security
+      technology: [php]
+      cwe:
+        - "CWE-434: Unrestricted Upload of File with Dangerous Type"
+      owasp:
+        - "A05:2021 - Security Misconfiguration"
+      dvwa-level: low
+      confidence: MEDIUM
+      likelihood: HIGH
+      impact: HIGH
+
+    patterns:
+      - patterns:
+          # 1) где-то добавляем basename($_FILES[$F]['name']) к пути
+          - pattern: |
+              $TARGET .= basename($_FILES[$F]['name']);
+
+          # 2) и потом двигаем туда файл
+          - pattern: |
+              move_uploaded_file($_FILES[$F]['tmp_name'], $TARGET);
+
+      # 3) В этом файле нет проверок MIME-типов (отсекаем medium/high)
+      - pattern-not: |
+          $_FILES[$F]['type']
+
+
   ######################################################################
   # 2) MEDIUM: проверяется только MIME-тип и размер (на основе $_FILES['type'])
   ######################################################################
