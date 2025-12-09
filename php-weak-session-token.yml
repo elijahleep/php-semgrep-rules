@@ -1,0 +1,33 @@
+rules:
+  - id: php-weak-session-token-md5-direct
+    languages: [php]
+    severity: WARNING
+    message: Session/auth cookie value is derived directly from md5(), which can enable session hijacking.
+    metadata:
+      owasp_top_10: "A07:2021 - Identification and Authentication Failures"
+      project: "CodeAlpha(1)"
+
+    patterns:
+      - pattern: setcookie($NAME, md5($X), ...);
+      - metavariable-regex:
+          metavariable: $NAME
+          regex: "(?i)^['\"](session(_token)?|auth(_token)?|sid|phpsessid)['\"]$"
+
+
+
+  - id: php-weak-session-token-md5-indirect
+    languages: [php]
+    severity: WARNING
+    message: Session/auth cookie value is derived from md5() assigned to a variable, which makes the token predictable.
+    metadata:
+      owasp_top_10: "A07:2021 - Identification and Authentication Failures"
+
+    patterns:
+      - pattern-inside: |
+          $VAL = md5($X);
+          ...
+      - pattern: setcookie($NAME, $VAL, ...);
+      - metavariable-regex:
+          metavariable: $NAME
+          regex: "(?i)^['\"](session(_token)?|auth(_token)?|sid|phpsessid)['\"]$"
+

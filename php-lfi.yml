@@ -1,38 +1,28 @@
 rules:
   - id: php-lfi-tainted-path
+    languages: [php]
     severity: ERROR
+    mode: taint
     message: >
       User-controlled input flows into filesystem functions.
       This may lead to Local File Inclusion (LFI), Directory Traversal, or
       Arbitrary File Read/Write.
     metadata:
-      technology: [php]
-      category: security
-      cwe:
-        - "CWE-22: Improper Limitation of a Pathname to a Restricted Directory (Path Traversal)"
-        - "CWE-73: External Control of File Name or Path"
-      owasp:
-        - "A01:2021 - Broken Access Control"
-      subcategory: [vuln]
-      impact: HIGH
-      likelihood: HIGH
-      confidence: MEDIUM
-    languages: [php]
-    mode: taint
+      owasp: "A01:2021 - Broken Access Control"
+      project: "BVCS(1)"
 
-    # SOURCES (путь строится из пользовательского ввода)
+
+
     pattern-sources:
       - pattern: $_GET[$KEY]
       - pattern: $_POST[$KEY]
       - pattern: $_REQUEST[$KEY]
       - pattern: $_COOKIE[$KEY]
       - pattern: $_SERVER[$KEY]
-      # Symfony Request::get("file")
       - pattern: $REQ->get($P)
       - pattern: $REQ->query->get($P)
       - pattern: $REQ->request->get($P)
 
-    # SANITIZERS (если применены — пропускаем)
     pattern-sanitizers:
       - pattern: realpath($PATH)
       - pattern: basename($PATH, ...)
@@ -40,7 +30,6 @@ rules:
       - pattern: filter_var($PATH, FILTER_SANITIZE_URL)
       - pattern: filter_var($PATH, FILTER_SANITIZE_SPECIAL_CHARS)
 
-    # SINKS (опасные файловые операции с tainted path)
     pattern-sinks:
       - pattern-either:
           - pattern: file_get_contents($PATH)

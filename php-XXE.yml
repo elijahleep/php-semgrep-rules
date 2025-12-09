@@ -3,54 +3,27 @@ rules:
     languages: [php]
     severity: ERROR
     mode: taint
-    message: >
-      Untrusted XML data flows into DOMDocument XML parsing with external
-      entities enabled. This may lead to XXE (XML External Entity) attacks and
-      disclosure of local files or SSRF.
-
+    message: Untrusted XML data flows into DOMDocument XML parsing with external entities enabled. This may lead to XXE (XML External Entity) attacks and disclosure of local files or SSRF.
     metadata:
-      category: security
-      technology: [php]
-      subcategory: [vuln]
-      cwe:
-        - "CWE-611: Improper Restriction of XML External Entity Reference ('XXE')"
-      owasp:
-        - "A03:2021 – Injection"
-      likelihood: HIGH
-      impact: HIGH
-      confidence: MEDIUM
+      owasp: "A03:2021 – Injection"
+      project: "BVCS(2)"
 
-    ######################################
-    # ИСТОЧНИКИ (пользовательский ввод)
-    ######################################
     pattern-sources:
       - pattern: $_GET[$KEY]
       - pattern: $_POST[$KEY]
       - pattern: $_REQUEST[$KEY]
       - pattern: file_get_contents("php://input")
 
-    ######################################
-    # САНИТАЙЗЕРЫ (если включили безопасный режим)
-    ######################################
     pattern-sanitizers:
       - pattern: libxml_disable_entity_loader(true)
 
-    ######################################
-    # SINK'И (опасный парсинг XML)
-    ######################################
     pattern-sinks:
       - pattern-either:
-          # DOMDocument::loadXML c флагами
           - patterns:
               - pattern: $DOC->loadXML($XML, $OPTS)
               - metavariable-regex:
                   metavariable: $OPTS
                   regex: .*LIBXML_NOENT|LIBXML_DTDLOAD.*
-
-          # DOMDocument::loadXML без флагов, но при libxml_disable_entity_loader(false)
           - patterns:
+              - pattern: libxml_disable_entity_loader(false); ...
               - pattern: $DOC->loadXML($XML)
-              - pattern-inside: |
-                  libxml_disable_entity_loader(false);
-                  ...
-                  $DOC->loadXML($XML)

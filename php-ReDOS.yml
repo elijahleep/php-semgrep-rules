@@ -1,17 +1,20 @@
 rules:
   - id: php-preg-replace-all-from-get
-    message: >
-      Все аргументы preg_replace берутся из $_GET.
-      Это может привести к ReDoS, RCE (при /e) или неожиданному поведению regex.
+    message: "REDOS: preg_replace() uses pattern and replacement fully controlled by $_GET."
     severity: ERROR
     languages: [php]
     patterns:
       - pattern: preg_replace($_GET[$P], $_GET[$R], $_GET[$S]);
+    metadata:
+      owasp_top_10: "A03:2021 - Injection"
+      project: "VPCE(2)"
+
 
   - id: php-preg-replace-pattern-from-get
-    message: >
-      Шаблон регулярного выражения preg_replace() контролируется пользователем ($_GET).
+    message: The regex pattern of preg_replace() is controlled by user input ($_GET).
     severity: WARNING
     languages: [php]
     patterns:
       - pattern: preg_replace($_GET[$P], $R, $S);
+    metadata:
+      owasp_top_10: "A03:2021 - Injection"

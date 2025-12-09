@@ -1,10 +1,11 @@
 rules:
   - id: php-permissive-cors-withheader
-    message: >
-      Заголовок Access-Control-Allow-Origin установлен в "*".
-      Это включает доступ с любых доменов (permissive CORS).
+    message: The Access-Control-Allow-Origin header is set to "*", which enables requests from any origin. This results in permissive CORS configuration and may expose sensitive endpoints to cross-origin attacks.
     severity: WARNING
     languages: [php]
+    metadata:
+      owasp_top_10: "A05:2021 – Security Misconfiguration"
+
     patterns:
       - pattern: $RESP->withHeader($NAME, $VALUE)
       - metavariable-regex:
@@ -13,7 +14,3 @@ rules:
       - metavariable-regex:
           metavariable: $VALUE
           regex: (\'|\")\*(\'|\")
-    metadata:
-      category: security
-      subcategory: [audit]
-      technology: [php]
