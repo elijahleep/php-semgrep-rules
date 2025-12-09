@@ -3,26 +3,30 @@ rules:
   - id: php-hardcoded-crypto-key-constant
     languages: [php]
     severity: WARNING
-    message: >
-      Найдена константа с потенциальным криптографическим ключом.
-      Ключи нельзя хранить в исходниках. Используйте ENV, Vault или KMS.
+    message: Hardcoded cryptographic key found → $NAME = "$VALUE". Avoid embedding secrets in code. Use secure storage (env vars, vault, key manager).
+    metadata:
+      owasp: 'A02:2021 – Cryptographic Failures'
+      project: DVWA(2)
+
     patterns:
       - pattern: |
-          define($NAME, $VALUE);
+          define("$NAME", "$VALUE");
       - metavariable-regex:
           metavariable: $NAME
           regex: '(?i)(key|secret|token|password|passwd|api[_-]?key|hmac|auth|master)'
-      - metavariable-regex:
-          metavariable: $VALUE
-          regex: '^["\'][^"\']*["\']$'
+
+
 
   # 2) Захардкоженный ключ в обычном присваивании
   - id: php-hardcoded-crypto-key-assignment
     languages: [php]
     severity: WARNING
-    message: >
-      Найдена переменная с потенциальным криптографическим ключом.
-      Ключи нельзя хранить в исходниках. Используйте ENV, Vault или KMS.
+    message: "Hardcoded cryptographic key assignment detected: $VAR = $VALUE"
+
+    metadata:
+      owasp: ['A02:2021 – Cryptographic Failures']
+
+
     patterns:
       - pattern: |
           $VAR = $VALUE;
@@ -31,32 +35,36 @@ rules:
           regex: '(?i)(\$?(key|secret|token|password|passwd|api[_-]?key|hmac|auth|master))'
       - metavariable-regex:
           metavariable: $VALUE
-          regex: '^["\'][^"\']*["\']$'
+          regex: >
+            ^["'][^"']*["']$
 
   # 3) Захардкоженный IV через define()
   - id: php-hardcoded-crypto-iv-constant
     languages: [php]
     severity: WARNING
-    message: >
-      Найдена константа IV, что является криптографически небезопасным.
-      IV должен быть случайным и уникальным (random_bytes()).
+    message: "Hardcoded IV constant detected: $NAME = $VALUE"
+    metadata:
+      owasp: ['A02:2021 – Cryptographic Failures']
+      project: DVWA(1)
+
     patterns:
       - pattern: |
-          define($NAME, $VALUE);
+          define("$NAME", "$VALUE");
       - metavariable-regex:
           metavariable: $NAME
           regex: '(?i)(iv|nonce|initial[_-]?vector)'
-      - metavariable-regex:
-          metavariable: $VALUE
-          regex: '^["\'][^"\']*["\']$'
 
-  # 4) Статический IV в AES-CBC
+
+   # 4) Статический IV в AES-CBC (литерал IV в вызове openssl)
   - id: openssl-cbc-static-iv
     languages: [php]
     severity: ERROR
-    message: >
-      Static IV used with AES-CBC. Это небезопасно и приводит к атакам
-      на конфиденциальность и целостность (CWE-329).
+    message: Static IV used with AES-CBC. This is insecure and enables attacks on confidentiality and integrity
+
+    metadata:
+      owasp: ['A02:2021 – Cryptographic Failures']
+
+
     patterns:
       - pattern-either:
           - pattern: |
@@ -68,13 +76,5 @@ rules:
           regex: '(?i)aes-(128|192|256)-cbc'
       - metavariable-regex:
           metavariable: $IV
-          regex: '^["\'][^"\']*["\']$'
-    metadata:
-      cwe: ['CWE-329']
-      owasp: ['A02:2021 – Cryptographic Failures']
-      technology: ['php', 'openssl']
-      category: security
-      subcategory: ['vuln']
-      likelihood: HIGH
-      impact: MEDIUM
-      confidence: HIGH
+          regex: >
+            ^["'][^"']*["']$

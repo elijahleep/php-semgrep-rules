@@ -1,0 +1,18 @@
+rules:
+  - id: php-insecure-aes-ecb
+    severity: ERROR
+    languages: [php]
+    message: "Insecure AES-ECB mode used: $ALGO. ECB mode leaks patterns and should not be used for sensitive data."
+    metadata:
+      owasp: "A02:2021 – Cryptographic Failures"
+      project: DVWA(2)
+
+    patterns:
+      - pattern-either:
+          - pattern: |
+              $C = openssl_encrypt($DATA, "$ALGO", $KEY, ...);
+          - pattern: |
+              $P = openssl_decrypt($DATA, "$ALGO", $KEY, ...);
+      - metavariable-regex:
+          metavariable: $ALGO
+          regex: "(?i)aes-(128|192|256)-ecb"

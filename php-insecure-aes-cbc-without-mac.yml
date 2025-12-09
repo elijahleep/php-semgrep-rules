@@ -1,37 +1,69 @@
 rules:
-  - id: php-insecure-aes-cbc-without-mac
+  # 1) AES-CBC без MAC/AEAD — алгоритм указан строкой
+  - id: php-insecure-aes-cbc-without-mac-literal
     severity: WARNING
     languages: [php]
-    message: >
-      Используется AES-CBC без явного MAC/AEAD рядом с этим вызовом.
-  CBC не обеспечивает целостность сам по себе и часто подвержен
-  padding oracle и подделке расшифрованных данных, если шифротекст
-  может менять атакующий. Убедитесь, что целостность данных
-  защищена (например, HMAC или AEAD), либо что шифротекст не
-  доступен для модификации.
+    message: Insecure AES-CBC mode used without MAC/AEAD. This may allow padding-oracle and integrity attacks.
+    metadata:
+      owasp: "A02:2021 – Cryptographic Failures"
+
+
     patterns:
-      # Ищем вызовы AES-CBC
       - pattern-either:
           - pattern: |
-              $X = openssl_encrypt($DATA, $ALGO, $KEY, $OPTS, $IV);
+              $C = openssl_encrypt($DATA, "$ALGO", $KEY, $OPTS, $IV, ...);
           - pattern: |
-              $X = openssl_decrypt($DATA, $ALGO, $KEY, $OPTS, $IV);
+              $P = openssl_decrypt($DATA, "$ALGO", $KEY, $OPTS, $IV, ...);
       - metavariable-regex:
           metavariable: $ALGO
-          regex: "aes-(128|192|256)-cbc"
+          regex: "(?i)aes-(128|192|256)-cbc"
 
-      # Исключаем AEAD (openssl_encrypt с тегом)
-      - pattern-not: |
-          $X = openssl_encrypt($DATA, $ALGO, $KEY, $OPTS, $IV, $TAG);
-
-      # Исключаем HMAC-подпись (простые случаи)
       - pattern-not: |
           $MAC = hash_hmac(...);
 
       - pattern-not: |
           if (hash_equals($MAC, ...)) { ... }
 
-      # Исключаем sodium AEAD
+      - pattern-not: |
+          $C = sodium_crypto_aead_chacha20poly1305_encrypt(...);
+
+      - pattern-not: |
+          $P = sodium_crypto_aead_chacha20poly1305_decrypt(...);
+
+
+
+    # 2) AES-CBC без MAC/AEAD — константа = "aes-*-cbc"
+  - id: php-insecure-aes-cbc-without-mac-const-algo
+    severity: WARNING
+    languages: [php]
+    message: Insecure AES-CBC mode used via ALGO constant without MAC/AEAD.
+    metadata:
+      owasp: "A02:2021 – Cryptographic Failures"
+      project: DVWA(1)
+
+
+
+    patterns:
+      - pattern-either:
+          - pattern: |
+              define("ALGO", "$ALGOVAL");
+              ...
+              $C = openssl_encrypt($DATA, ALGO, $KEY, $OPTS, $IV, ...);
+          - pattern: |
+              define("ALGO", "$ALGOVAL");
+              ...
+              $P = openssl_decrypt($DATA, ALGO, $KEY, $OPTS, $IV, ...);
+      - metavariable-regex:
+          metavariable: $ALGOVAL
+          regex: "(?i)aes-(128|192|256)-cbc"
+
+      # 3) Те же pattern-not, чтобы отсечь MAC/AEAD
+      - pattern-not: |
+          $MAC = hash_hmac(...);
+
+      - pattern-not: |
+          if (hash_equals($MAC, ...)) { ... }
+
       - pattern-not: |
           $C = sodium_crypto_aead_chacha20poly1305_encrypt(...);
 

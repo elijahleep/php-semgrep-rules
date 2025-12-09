@@ -5,6 +5,7 @@ rules:
     languages: [php]
     metadata:
       owasp_top_10: "A05:2021 – Security Misconfiguration"
+      project: "VPCE(1)"
 
     patterns:
       - pattern: $RESP->withHeader($NAME, $VALUE)
