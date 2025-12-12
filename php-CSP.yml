@@ -6,8 +6,6 @@ rules:
       Insecure Content-Security-Policy: script-src allows unsafe-inline or
       unsafe-eval, which weakens XSS protection.
     metadata:
-      category: security
-      technology: [php]
       owasp_top_10: "A05:2021 - Security Misconfiguration"
       project: DVWA(1)
 

@@ -1,10 +1,8 @@
-!!!!!!!!!!!!!!!
 rules:
   - id: tainted-sql-numeric-unquoted-medium
     languages: [php]
     severity: ERROR
     mode: taint
-
     message: |
       User-controlled data flows into an unquoted numeric SQL parameter.
       Using mysqli_real_escape_string() does not make this safe if the value
@@ -12,20 +10,8 @@ rules:
       medium-level SQL injection (e.g. `WHERE user_id = $id;`).
 
     metadata:
-      cwe:
-        - "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')"
-      owasp:
-        - A01:2017 - Injection
-        - A03:2021 - Injection
-      references:
-        - https://owasp.org/www-community/attacks/SQL_Injection
-      category: security
-      technology: [php]
-      subcategory: [vuln]
-      likelihood: HIGH
-      impact: MEDIUM
-      confidence: MEDIUM
-      dvwa-level: medium
+      owasp: A03:2021 - Injection
+      project: DVWA(1)
 
     pattern-sources:
       - patterns:
@@ -34,10 +20,15 @@ rules:
               - pattern: $_POST
               - pattern: $_COOKIE
               - pattern: $_REQUEST
+              - pattern: $_GET[...]
+              - pattern: $_POST[...]
+              - pattern: $_COOKIE[...]
+              - pattern: $_REQUEST[...]
 
     pattern-propagators:
-      - patterns:
-          - pattern: $CLEAN = mysqli_real_escape_string(..., $DIRTY);
+      - pattern: $CLEAN = mysqli_real_escape_string(..., $DIRTY);
+        from: $DIRTY
+        to: $CLEAN
 
     pattern-sanitizers:
       - pattern-either:
@@ -46,93 +37,76 @@ rules:
 
     pattern-sinks:
       - pattern-either:
-
+          # SQL строится с unquoted numeric
           - patterns:
-              - pattern: mysqli_query(..., $SQL)
+              - pattern: $SQL = " ... WHERE user_id = $ID ... ";
               - metavariable-regex:
                   metavariable: $SQL
-                  regex: (?is).*\b(select|delete|insert|update|alter|drop)\b.*=\s*\$[A-Za-z_][A-Za-z0-9_]*\b.*
-
-          # 2) Обобщённый $db->query($SQL)
-          - patterns:
-              - pattern: $DB->query($SQL)
-              - metavariable-regex:
-                  metavariable: $SQL
-                  regex: (?is).*\b(select|delete|insert|update|alter|drop)\b.*=\s*\$[A-Za-z_][A-Za-z0-9_]*\b.*
+                  regex: (?is).*\bwhere\b.*\buser_id\b\s*=\s*\$[A-Za-z_][A-Za-z0-9_]*\b.*
+          # и/или выполнение
+          - pattern: mysqli_query(..., $SQL)
+          - pattern: $DB->query($SQL)
 
 
 
   - id: tainted-sql-string-extended
-  languages:
-    - php
-  severity: ERROR
-  message: User data flows into this manually-constructed SQL string (including via
-    string interpolation or concatenation) which is then executed as a query. This
-    is a possible SQL injection. Use prepared statements instead of dynamic SQL.
-  metadata:
-    cwe:
-      - "CWE-89: Improper Neutralization of Special Elements used in an SQL Command ('SQL Injection')"
-    owasp:
-      - A01:2017 - Injection
-      - A03:2021 - Injection
-    references:
-      - https://owasp.org/www-community/attacks/SQL_Injection
-    category: security
-    technology:
+    languages:
       - php
-    cwe2022-top25: true
-    cwe2021-top25: true
-    subcategory:
-      - vuln
-    likelihood: HIGH
-    impact: MEDIUM
-    confidence: MEDIUM
-  mode: taint
+    severity: ERROR
+    message: User data flows into this manually-constructed SQL string (including via
+      string interpolation or concatenation) which is then executed as a query. This
+      is a possible SQL injection. Use prepared statements instead of dynamic SQL.
+    mode: taint
 
-  # те же "санитайзеры", что и в исходном правиле
-  pattern-sanitizers:
-    - pattern-either:
-        - pattern: mysqli_real_escape_string(...)
-        - pattern: real_escape_string(...)
-        - pattern: $MYSQLI->real_escape_string(...)
+    metadata:
+      owasp: A03:2021 - Injection
+      project: DVWA(1) sql_labs(1)
 
-  # 🔹 ИСТОЧНИКИ: добавили сюда ещё и $_SESSION
-  pattern-sources:
-    - patterns:
-        - pattern-either:
-            - pattern: $_GET
-            - pattern: $_POST
-            - pattern: $_COOKIE
-            - pattern: $_REQUEST
-            - pattern: $_SESSION
+    pattern-sanitizers:
+      - pattern-either:
+          - pattern: real_escape_string(...)
+          - pattern: $MYSQLI->real_escape_string(...)
 
-  # 🔹 SINK-и: реальные вызовы выполнения SQL + старые строковые варианты
-  pattern-sinks:
-    - pattern-either:
-        # 1) Прямое выполнение SQL
-        - pattern: mysqli_query(..., $SQL)
-        - pattern: $DB->query($SQL)
+    pattern-sources:
+      - patterns:
+          - pattern-either:
+              - pattern: $_GET
+              - pattern: $_POST
+              - pattern: $_COOKIE
+              - pattern: $_REQUEST
+              - pattern: $_SESSION
+              - pattern: $_GET[...]
+              - pattern: $_POST[...]
+              - pattern: $_COOKIE[...]
+              - pattern: $_REQUEST[...]
+              - pattern: $_SESSION[...]
 
-        # 2) sprintf с SQL-шаблоном
-        - patterns:
-            - pattern: |
-                sprintf($SQLSTR, ...)
-            - metavariable-regex:
-                metavariable: $SQLSTR
-                regex: (?is).*\b(select|delete|insert|create|update|alter|drop)\b.*
+    pattern-sinks:
+      - pattern-either:
+          # 1) Прямое выполнение SQL
+          - pattern: mysqli_query(..., $SQL)
+          - pattern: $DB->query($SQL)
 
-        # 3) Строка с интерполяцией таинтовой переменной (включая "WHERE ... '$id'")
-        - patterns:
-            - pattern: |
-                "...$EXPR..."
-            - metavariable-regex:
-                metavariable: $EXPR
-                regex: (?is).*\b(select|delete|insert|create|update|alter|drop)\b.*
+          # 2) sprintf с SQL-шаблоном
+          - patterns:
+              - pattern: |
+                  sprintf($SQLSTR, ...)
+              - metavariable-regex:
+                  metavariable: $SQLSTR
+                  regex: (?is).*\b(select|delete|insert|create|update|alter|drop)\b.*
 
-        # 4) Конкатенация "SQL" . $EXPR
-        - patterns:
-            - pattern: |
-                "$SQLSTR".$EXPR
-            - metavariable-regex:
-                metavariable: $SQLSTR
-                regex: (?is).*\b(select|delete|insert|create|update|alter|drop)\b.*
+          # 3) Строка с интерполяцией таинтовой переменной (включая "WHERE ... '$id'")
+          - patterns:
+              - pattern: |
+                  "...$EXPR..."
+              - metavariable-regex:
+                  metavariable: $EXPR
+                  regex: (?is).*\b(select|delete|insert|create|update|alter|drop)\b.*
+
+          # 4) Конкатенация "SQL" . $EXPR
+          - patterns:
+              - pattern: |
+                  "$SQLSTR".$EXPR
+              - metavariable-regex:
+                  metavariable: $SQLSTR
+                  regex: (?is).*\b(select|delete|insert|create|update|alter|drop)\b.*

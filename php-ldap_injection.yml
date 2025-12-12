@@ -8,7 +8,7 @@ rules:
       which can lead to LDAP Injection. Use ldap_escape() to sanitize input.
     metadata:
       owasp: "A03:2021 – Injection"
-      project: "BVCS(1)"
+      project: "BVCS(1) CodeAlpha(1)"
 
 
 
@@ -32,3 +32,4 @@ rules:
           - pattern: ldap_search($DS, $BASE, $FILTER, ...)
           - pattern: ldap_list($DS, $BASE, $FILTER, ...)
           - pattern: ldap_read($DS, $BASE, $FILTER, ...)
+          - pattern: ldap_bind($DS, $DN, $PASS)
