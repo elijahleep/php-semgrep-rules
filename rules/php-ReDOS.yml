@@ -1,0 +1,12 @@
+rules:
+  - id: php-preg-replace-tainted-pattern-or-replacement-from-get
+    message: "REDOS: preg_replace() uses regex pattern or replacement controlled by $_GET (directly or via variable)."
+    severity: ERROR
+    languages: [php]
+    mode: taint
+    pattern-sources:
+      - pattern: $_GET[$KEY]
+    pattern-sinks:
+      - pattern: preg_replace($PATTERN, $REPL, $SUBJ)
+    metadata:
+      owasp_top_10: "A03:2021 - Injection"

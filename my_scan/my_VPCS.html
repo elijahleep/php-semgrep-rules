@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Semgrep Report</title>
+<style>
+body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; margin:20px;}
+h1{margin-bottom:0}
+summary{cursor:pointer}
+table{border-collapse:collapse; width:100%; margin:8px 0 24px}
+th,td{border:1px solid #ddd; padding:8px; vertical-align:top}
+th{background:#f6f6f6; text-align:left}
+small{color:#666}
+.badge{display:inline-block;padding:2px 6px;border-radius:6px;background:#eee;margin-left:6px;font-size:12px}
+</style>
+</head>
+<body>
+<h1>Semgrep Report</h1>
+<p><small>Generated: 2025-12-13T09:20:50</small></p>
+<p>Rules run: N/A, Findings: 12</p>
+<h2>vulnerable-php-code-examples/src/basic-collection.php <small>(1 findings)</small></h2><table><thead><tr><th>Rule</th><th>Severity</th><th>Message</th><th>Line</th><th>Column</th></tr></thead><tbody><tr><td>rules.tainted-sql-string-extended</td><td>ERROR</td><td>User data flows into this manually-constructed SQL string (including via string interpolation or concatenation) which is then executed as a query. This is a possible SQL injection. Use prepared statements instead of dynamic SQL.</td><td>9</td><td>13</td></tr></tbody></table><h2>vulnerable-php-code-examples/src/sql-injection.php <small>(3 findings)</small></h2><table><thead><tr><th>Rule</th><th>Severity</th><th>Message</th><th>Line</th><th>Column</th></tr></thead><tbody><tr><td>rules.tainted-sql-string-extended</td><td>ERROR</td><td>User data flows into this manually-constructed SQL string (including via string interpolation or concatenation) which is then executed as a query. This is a possible SQL injection. Use prepared statements instead of dynamic SQL.</td><td>11</td><td>8</td></tr><tr><td>rules.tainted-sql-numeric-unquoted-medium</td><td>ERROR</td><td>User-controlled data flows into an unquoted numeric SQL parameter.
+Using mysqli_real_escape_string() does not make this safe if the value
+is not quoted in the SQL string. This pattern matches DVWA-like
+medium-level SQL injection (e.g. `WHERE user_id = $id;`).
+</td><td>13</td><td>10</td></tr><tr><td>rules.tainted-sql-string-extended</td><td>ERROR</td><td>User data flows into this manually-constructed SQL string (including via string interpolation or concatenation) which is then executed as a query. This is a possible SQL injection. Use prepared statements instead of dynamic SQL.</td><td>13</td><td>10</td></tr></tbody></table><h2>vulnerable-php-code-examples/src/sql-injection_2.php <small>(2 findings)</small></h2><table><thead><tr><th>Rule</th><th>Severity</th><th>Message</th><th>Line</th><th>Column</th></tr></thead><tbody><tr><td>rules.tainted-sql-numeric-unquoted-medium</td><td>ERROR</td><td>User-controlled data flows into an unquoted numeric SQL parameter.
+Using mysqli_real_escape_string() does not make this safe if the value
+is not quoted in the SQL string. This pattern matches DVWA-like
+medium-level SQL injection (e.g. `WHERE user_id = $id;`).
+</td><td>11</td><td>10</td></tr><tr><td>rules.tainted-sql-string-extended</td><td>ERROR</td><td>User data flows into this manually-constructed SQL string (including via string interpolation or concatenation) which is then executed as a query. This is a possible SQL injection. Use prepared statements instead of dynamic SQL.</td><td>11</td><td>10</td></tr></tbody></table><h2>vulnerable-php-code-examples/src/tool-examples/phpcs-security-audit.php <small>(6 findings)</small></h2><table><thead><tr><th>Rule</th><th>Severity</th><th>Message</th><th>Line</th><th>Column</th></tr></thead><tbody><tr><td>rules.php-preg-replace-tainted-pattern-or-replacement-from-get</td><td>ERROR</td><td>REDOS: preg_replace() uses regex pattern or replacement controlled by $_GET (directly or via variable).</td><td>10</td><td>1</td></tr><tr><td>rules.php-preg-replace-tainted-pattern-or-replacement-from-get</td><td>ERROR</td><td>REDOS: preg_replace() uses regex pattern or replacement controlled by $_GET (directly or via variable).</td><td>11</td><td>1</td></tr><tr><td>rules.php-preg-replace-tainted-pattern-or-replacement-from-get</td><td>ERROR</td><td>REDOS: preg_replace() uses regex pattern or replacement controlled by $_GET (directly or via variable).</td><td>12</td><td>1</td></tr><tr><td>rules.php-preg-replace-tainted-pattern-or-replacement-from-get</td><td>ERROR</td><td>REDOS: preg_replace() uses regex pattern or replacement controlled by $_GET (directly or via variable).</td><td>13</td><td>1</td></tr><tr><td>rules.php-xml-parse-dos</td><td>ERROR</td><td>XML</td><td>39</td><td>1</td></tr><tr><td>rules.php-permissive-cors-withheader</td><td>WARNING</td><td>The Access-Control-Allow-Origin header is set to &quot;*&quot;, which enables requests from any origin. This results in permissive CORS configuration and may expose sensitive endpoints to cross-origin attacks.</td><td>43</td><td>1</td></tr></tbody></table>
+</body></html>

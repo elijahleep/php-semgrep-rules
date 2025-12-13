@@ -64,8 +64,8 @@ rules:
 
     pattern-sanitizers:
       - pattern-either:
-          - pattern: real_escape_string(...)
-          - pattern: $MYSQLI->real_escape_string(...)
+          - pattern: $DB->prepare(...)
+          - pattern: mysqli_prepare(...)
 
     pattern-sources:
       - patterns:

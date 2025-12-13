@@ -6,7 +6,7 @@ rules:
 
     metadata:
       owasp: ['A02:2021 – Cryptographic Failures']
-      project: DVWA(2)
+      project: DVWA(2) BVCS(1)
 
     pattern: |
       $X .= basename($_FILES[$F]['name']);
