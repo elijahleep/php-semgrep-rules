@@ -4,10 +4,10 @@
 
 ## Структура проекта
 
-rules/              # правила Semgrep в формате YAML
-semgrep_scan/       # результаты запуска Semgrep стандартным набором
-my_scan/            # результаты запуска Semgrep разработанным набором
-semgrep_to_html.py  # Python-скрипт для конвертации отчёта Semgrep в HTML
+- `rules/` — правила Semgrep в формате YAML  
+- `semgrep_scan/` — результаты запуска Semgrep стандартным набором  
+- `my_scan/` — результаты запуска Semgrep разработанным набором  
+- `semgrep_to_html.py` — Python-скрипт для конвертации отчёта Semgrep в HTML 
 
 ## Использование
 
