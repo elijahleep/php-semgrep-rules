@@ -1,0 +1,15 @@
+rules:
+- id: permissive-cors-allowed-origin-pattern
+  message: Permissive CORS configuration detected. Using addAllowedOriginPattern("*").
+  metadata:
+    cwe:
+    - 'CWE-183: Permissive List of Allowed Inputs'
+  severity: WARNING
+  languages: [java]
+
+
+  pattern-either:
+  - pattern: |
+      CorsConfiguration $CFG = ...;
+      ...
+      $CFG.addAllowedOriginPattern("*");
