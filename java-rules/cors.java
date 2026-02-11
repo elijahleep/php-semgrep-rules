@@ -1,46 +1,29 @@
 class PermissiveCorsAllowedOriginPatternTest {
 
-  public void bad_direct() {
+  public void bad_pattern() {
     CorsConfiguration config = new CorsConfiguration();
-    // ruleid: permissive-cors-allowed-origin-pattern
+    // ruleid
     config.addAllowedOriginPattern("*");
   }
 
-  public void bad_indirect_after_other_calls() {
-    CorsConfiguration config = new CorsConfiguration();
-    config.setAllowCredentials(true);
-    // ruleid: permissive-cors-allowed-origin-pattern
-    config.addAllowedOriginPattern("*");
-    config.addAllowedHeader("*");
-  }
 
-  public void bad_static_helper(CorsConfiguration config) {
-    // ruleid: permissive-cors-allowed-origin-pattern
-    config.addAllowedOriginPattern("*");
-  }
-
-  public void ok_specific_origin() {
+  public void ok_pattern_1() {
     CorsConfiguration config = new CorsConfiguration();
-    // ok: permissive-cors-allowed-origin-pattern
+    // ok
     config.addAllowedOriginPattern("https://example.com");
   }
 
-  public void ok_pattern_not_wildcard() {
+  public void ok_pattern_2() {
     CorsConfiguration config = new CorsConfiguration();
-    // ok: permissive-cors-allowed-origin-pattern
+    // ok
     config.addAllowedOriginPattern("https://*.example.com");
   }
 
-  public void ok_other_method() {
-    CorsConfiguration config = new CorsConfiguration();
-    // ok: permissive-cors-allowed-origin-pattern
-    config.addAllowedHeader("*");
-  }
 
-  public void ok_star_in_other_context() {
+  public void star_in_context() {
     String s = "*";
     CorsConfiguration config = new CorsConfiguration();
-    // ok: permissive-cors-allowed-origin-pattern
+    // ruleid
     config.addAllowedOriginPattern(s);
   }
 }

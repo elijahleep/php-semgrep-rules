@@ -1,6 +1,6 @@
 rules:
 - id: permissive-cors-allowed-origin-pattern
-  message: Permissive CORS configuration detected. Using addAllowedOriginPattern("*").
+  message: Permissive CORS configuration detected addAllowedOriginPattern("*").
   metadata:
     cwe:
     - 'CWE-183: Permissive List of Allowed Inputs'
