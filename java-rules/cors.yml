@@ -1,15 +1,42 @@
 rules:
-- id: permissive-cors-allowed-origin-pattern
-  message: Permissive CORS configuration detected addAllowedOriginPattern("*").
-  metadata:
-    cwe:
-    - 'CWE-183: Permissive List of Allowed Inputs'
-  severity: WARNING
-  languages: [java]
+  - id: cors-allowedOrigin
+    message: Permissive CORS configuration detected ("*").
+    severity: WARNING
+    languages: [java]
+
+    pattern-either:
+      - pattern: $CFG.addAllowedOrigin("*")
+      - pattern: $CFG.addAllowedOriginPattern("*")
+      - pattern: $REG.allowedOrigins("*")
+      - pattern: $REG.allowedOriginPatterns("*")
+      - pattern: |
+          $REG.addMapping(...)
+              .allowedOrigins("*")
+      - pattern: |
+          $REG.addMapping(...)
+              .allowedOriginPatterns("*")
+      - pattern: $CFG.applyPermitDefaultValues()
 
 
-  pattern-either:
-  - pattern: |
-      CorsConfiguration $CFG = ...;
-      ...
-      $CFG.addAllowedOriginPattern("*");
+  - id: cors-setAllowedOrigins-list
+    message: Wildcard origin inside setAllowedOrigins().
+    severity: WARNING
+    languages: [java]
+
+    patterns:
+      - pattern: $CFG.setAllowedOrigins($ARGS)
+      - metavariable-pattern:
+          metavariable: $ARGS
+          pattern: '"*"'
+
+
+  - id: cors-setAllowedOriginPatterns-list
+    message: Wildcard origin inside setAllowedOriginPatterns().
+    severity: WARNING
+    languages: [java]
+
+    patterns:
+      - pattern: $CFG.setAllowedOriginPatterns($ARGS)
+      - metavariable-pattern:
+          metavariable: $ARGS
+          pattern: '"*"'
