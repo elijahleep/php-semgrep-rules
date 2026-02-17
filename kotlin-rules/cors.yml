@@ -1,0 +1,23 @@
+rules:
+  - id: kotlin-cors
+    languages: [kotlin]
+    severity: ERROR
+    message: Permissive CORS configuration detected ("*").
+    metadata:
+      category: security
+      technology: spring
+      cwe: "CWE-942"
+    pattern-either:
+      - pattern: $CONFIG.addAllowedOrigin("*")
+      - pattern: registry.addMapping(...).allowedOrigins("*")
+      - pattern: $CONFIG.allowedOrigins = listOf("*")
+
+  - id: kotlin-cors-CrossOrigin
+    languages: [kotlin]
+    message: "@CrossOrigin with '*' detected."
+    severity: ERROR
+    metadata:
+      category: security
+      technology: spring
+      cwe: "CWE-942"
+    pattern-regex: '@CrossOrigin\(\s*(?:origins\s*=\s*(\["\*"\]|"\*")\s*)?(?:,.*)?\)|@CrossOrigin\(\s*\)'
