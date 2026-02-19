@@ -9,15 +9,32 @@ rules:
       cwe: "CWE-942"
     pattern-either:
       - pattern: $CONFIG.addAllowedOrigin("*")
+      - pattern: $CONFIG.addAllowedOriginPattern("*")
+
+      - pattern: $CONFIG.applyPermitDefaultValues()
+
       - pattern: registry.addMapping(...).allowedOrigins("*")
+      - pattern: $CONFIG.allowedOrigins("*")
       - pattern: $CONFIG.allowedOrigins = listOf("*")
+
+      - pattern: registry.addMapping(...).allowedOriginPatterns("*")
+      - pattern: $CONFIG.allowedOriginPatterns("*")
+      - pattern: $CONFIG.allowedOriginPatterns  = listOf("*")
+
+      - pattern: $CONFIG.setAllowedOrigins(listOf("*"))
+      - pattern: $CONFIG.setAllowedOriginPatterns(listOf("*"))
+
+  
 
   - id: kotlin-cors-CrossOrigin
     languages: [kotlin]
-    message: "@CrossOrigin with '*' detected."
+    message: "@CrossOrigin configuration *"
     severity: ERROR
     metadata:
       category: security
       technology: spring
       cwe: "CWE-942"
-    pattern-regex: '@CrossOrigin\(\s*(?:origins\s*=\s*(\["\*"\]|"\*")\s*)?(?:,.*)?\)|@CrossOrigin\(\s*\)'
+    pattern-either:
+      - pattern-regex: '@CrossOrigin()\n'
+      - pattern-regex: '@CrossOrigin\(\s*(?:origins\s*=\s*(\["\*"\]|"\*")|originPatterns\s*=\s*(\["\*"\]|"\*")|"\*")?(?:,.*)?\s*\)'
+      - pattern-regex: '@CrossOrigin\s*\(\s*(?:(?!\borigins\b|\boriginPatterns\b)[\s\S])+?\)'
