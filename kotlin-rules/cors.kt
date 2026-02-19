@@ -1,96 +1,136 @@
-package com.example.cors
+// Примеры @CrossOrigin
 
-import org.springframework.web.bind.annotation.CrossOrigin
-import org.springframework.web.servlet.config.annotation.CorsRegistry
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
+@CrossOrigin
+class Vuln1 {}
 
-////////////////////////////////////////////////////////////////////////////////
-// 1️⃣ Тесты для kotlin-spring-cors
-////////////////////////////////////////////////////////////////////////////////
+@CrossOrigin()
+class Vuln2 {}
 
-class CorsConfig : WebMvcConfigurer {
+@CrossOrigin(
+    allowCredentials = "true",
+    maxAge = 3600)
+class Vuln3 {}
 
-    override fun addCorsMappings(registry: CorsRegistry) {
-        // ❌ Wildcard literal — должно матчиться
-        registry.addMapping("/**").allowedOrigins("*")
+@CrossOrigin(
+    origins = ["https://example.com:8443", "*"]
+)
+class Vuln4 {}
 
-        // ❌ Разбитая цепочка вызовов — должно матчиться
-        registry.addMapping("/api/**")
-            .allowedOrigins("*")
-            .allowedMethods("GET", "POST")
+@CrossOrigin(
+    originPatterns = ["*"]
+)
+class Vuln5 {
 
-        // ❌ allowedOriginPatterns("*") — должно матчиться
-        registry.addMapping("/pattern/**")
-            .allowedOriginPatterns("*")
-    }
-
-    fun dynamicOriginExample() {
-        val anyOrigin = "*"
-        // ❌ Переменная с "*" — должно матчиться
-        registry.addMapping("/dynamic/**").allowedOrigins(anyOrigin)
-    }
-
-    // ✅ Безопасный пример — не должно матчиться
-    override fun addSafeCorsMappings(registry: CorsRegistry) {
-        registry.addMapping("/safe/**")
-            .allowedOrigins("https://example.com")
-            .allowedMethods("GET", "POST")
-    }
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// 2️⃣ Тесты для kotlin-cors-CrossOrigin
-////////////////////////////////////////////////////////////////////////////////
+@CrossOrigin(originPatterns = ["*"], allowCredentials = "true")
+fun getProfile() = "Sensitive User Data"
 
-// ❌ Wildcard default — должно матчиться
 @CrossOrigin
 class OpenController1 {
-
-    // ❌ Wildcard string — должно матчиться
     @CrossOrigin("*")
     fun getAll1() {}
 
-    // ❌ Array wildcard — должно матчиться
     @CrossOrigin(origins = ["*"])
     fun getAll2() {}
 
-    // ❌ String wildcard — должно матчиться
     @CrossOrigin(origins = "*")
     fun getAll3() {}
 
-    // ✅ Безопасный origin — не должно матчиться
     @CrossOrigin(origins = ["https://example.com"])
     fun getSafe() {}
 }
 
-// ❌ Critical: wildcard + credentials — должно матчиться, если правило есть
 @CrossOrigin(origins = "*", allowCredentials = "true")
 class OpenController2 {
     fun getAll() {}
 }
 
-// ✅ Безопасный: wildcard с ограничением origin — не должно матчиться
-@CrossOrigin(origins = ["https://mycompany.com"], allowCredentials = "true")
-class SafeController {
-    fun getAll() {}
+
+////
+// Примеры уязвимой конфигурации через методы registry.addMapping
+////
+
+fun addCorsMappings(registry: CorsRegistry) {
+
+    registry.addMapping("/**").allowedOrigins("*")
+
+    registry.addMapping("/api/**")
+        .allowedOrigins("*")
+        .allowedMethods("GET", "POST")
+
+    registry.addMapping("/pattern/**")
+        .allowedOriginPatterns("*")
 }
 
-    fun insecureCors() {
-        val configuration = CorsConfiguration()
-        configuration.allowedOrigins = listOf("*") // ruleid: kotlin-cors-allowed-origins-wildcard
-    }
 
-    fun insecureCorsMultiple() {
-        val configuration = CorsConfiguration()
-        configuration.allowedOrigins = listOf("https://example.com", "*") // ruleid: kotlin-cors-allowed-origins-wildcard
-    }
+fun dynamicOrigin() {
+    val anyOrigin = "*"
+    registry.addMapping("/**").allowedOrigins(anyOrigin)
+}
 
-    fun secureCors() {
-        val configuration = CorsConfiguration()
-        configuration.allowedOrigins = listOf("https://example.com") // ok: kotlin-cors-allowed-origins-wildcard
-    }
+// ok
+fun safeCorsMappings(registry: CorsRegistry) {
+    registry.addMapping("/safe/**")
+        .allowedOrigins("https://example.com")
+        .allowedMethods("GET", "POST")
+}
 
-    fun secureEmpty() {
-        val configuration = CorsConfiguration()
-        configuration.allowedOrigins = listOf() // ok: kotlin-cors-allowed-origins-wildcard
-    }
+override fun safeCorsPatternMappings(registry: CorsRegistry) {
+    registry.addMapping("/api/**")
+        .allowedOriginPatterns("*")
+}
+
+////
+// Примеры уязвимой конфигурации через методы: addAllowedOrigin, applyPermitDefaultValues, allowedOrigins, allowedOriginPatterns, addAllowedOriginPattern, setAllowedOrigins, setAllowedOriginPatterns
+////
+
+fun corsfilter_addAllowedOrigin() {
+    val config = CorsConfiguration()
+    config.allowCredentials = true
+    config.addAllowedOrigin("*")
+}
+
+fun corsfilter_addAllowedOrigin() {
+    val config = CorsConfiguration()
+    config.allowCredentials = true
+    config.addAllowedOriginPattern("*")
+}
+
+fun corsfilter_applyPermitDefaultValues(): UrlBasedCorsConfigurationSource {
+    val config = CorsConfiguration().applyPermitDefaultValues()
+}
+
+fun corsFilter_allowedOrigins(): CorsFilter {
+    val config = CorsConfiguration()
+    config.allowedOrigins  = listOf("*") 
+}
+
+fun corsFilter_allowedOriginPatterns_list(): CorsFilter {
+    val config = CorsConfiguration()
+    config.allowedOriginPatterns = listOf("*") 
+    config.allowCredentials = true               
+}
+
+
+fun corsFilter_setAllowedOrigins(): CorsFilter {
+    val config = CorsConfiguration()
+    config.setAllowedOrigins(listOf("*"))
+}
+
+fun corsFilter_setAllowedOriginPatterns(): CorsFilter {
+    val config = CorsConfiguration()
+    config.setAllowedOriginPatterns(listOf("*"))
+}
+
+// Safe examples
+
+@CrossOrigin(
+    origins = ["https://example.com:8443"]
+)
+class Safe1 {}
+
+@CrossOrigin(
+    originPatterns = ["https://*.example.com"]
+)
+class Safe2 {}
